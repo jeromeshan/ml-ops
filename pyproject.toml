@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "cats_and_dogs"
+name = "mlp_digits"
 version = "0.1.0"
 description = "Hometask for intro to ML Ops, its a projects for classification between cats and dogs"
 authors = ["Андрей Шан <avshan@edu.hse.ru>"]
@@ -10,7 +10,17 @@ readme = "README.md"
 python = "~3.9"
 matplotlib = "^3.8.2"
 numpy = "^1.26.2"
+pre-commit = "^3.6.0"
 
+[tool.black]
+line-length = 90
+target-version = ["py39"]
+
+[tool.isort]
+src_paths = ["mlp_digits"]
+profile = "black"
+line_length = 90
+lines_after_imports = 2
 
 [build-system]
 requires = ["poetry-core"]
