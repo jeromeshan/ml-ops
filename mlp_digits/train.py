@@ -1,13 +1,14 @@
-import numpy as np
 import hydra
-from omegaconf import DictConfig, OmegaConf
+import numpy as np
+from omegaconf import DictConfig
 from skl2onnx import convert_sklearn
 from skl2onnx.common.data_types import Int64TensorType
 from sklearn.metrics import accuracy_score
 from sklearn.neural_network import MLPClassifier
 
+
 @hydra.main(version_base=None, config_path="conf", config_name="config")
-def train(cfg : DictConfig, model_filename="model.onnx"):
+def train(cfg: DictConfig, model_filename="model.onnx"):
     with open("data/X_train.npy", "rb") as f:
         X_train = np.load(f)
     with open("data/X_test.npy", "rb") as f:
@@ -18,10 +19,13 @@ def train(cfg : DictConfig, model_filename="model.onnx"):
         y_test = np.load(f)
 
     mlp = MLPClassifier(
-        hidden_layer_sizes=(cfg.hyperparams.layer_size, cfg.hyperparams.layer_size), random_state=cfg.hyperparams.seed, max_iter=cfg.hyperparams.max_iter
-    ).fit(  # noqa: E501
-        X_train, y_train
-    )
+        hidden_layer_sizes=(
+            cfg.hyperparams.layer_size,
+            cfg.hyperparams.layer_size,
+        ),  # noqa: E501
+        random_state=cfg.hyperparams.seed,
+        max_iter=cfg.hyperparams.max_iter,
+    ).fit(X_train, y_train)
 
     initial_type = [("int_input", Int64TensorType([None, 64]))]
     onx = convert_sklearn(mlp, initial_types=initial_type)

@@ -15,5 +15,6 @@ def infer(model_filename="model.onnx", data=None):
     pred_onx = sess.run([label_name], {input_name: data})[0][0]
     return pred_onx
 
+
 if __name__ == "__main__":
     infer()
