@@ -1,0 +1,4 @@
+hyperparams:
+  seed: 1
+  max_iter: 300
+  layer_size: 10
