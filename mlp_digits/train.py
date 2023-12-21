@@ -1,4 +1,8 @@
+import os
+
+import git
 import hydra
+import mlflow
 import numpy as np
 from omegaconf import DictConfig
 from skl2onnx import convert_sklearn
@@ -7,15 +11,16 @@ from sklearn.metrics import accuracy_score
 from sklearn.neural_network import MLPClassifier
 
 
-@hydra.main(version_base=None, config_path="conf", config_name="config")
-def train(cfg: DictConfig, model_filename="model.onnx"):
-    with open("data/X_train.npy", "rb") as f:
+@hydra.main(version_base=None, config_path="../configs", config_name="config")
+def train(cfg: DictConfig, model_filename="../model.onnx"):
+    os.system("cd .. && dvc pull data && cd mlp_digits")
+    with open("../data/X_train.npy", "rb") as f:
         X_train = np.load(f)
-    with open("data/X_test.npy", "rb") as f:
+    with open("../data/X_test.npy", "rb") as f:
         X_test = np.load(f)
-    with open("data/y_train.npy", "rb") as f:
+    with open("../data/y_train.npy", "rb") as f:
         y_train = np.load(f)
-    with open("data/y_test.npy", "rb") as f:
+    with open("../data/y_test.npy", "rb") as f:
         y_test = np.load(f)
 
     mlp = MLPClassifier(
@@ -38,7 +43,29 @@ def train(cfg: DictConfig, model_filename="model.onnx"):
     print("Train accuracy: " + str(train_acc))
     print("Test accuracy: " + str(test_acc))
 
-    return train_acc, test_acc
+    mlflow.set_tracking_uri(uri="http://128.0.1.1:8080")
+
+    mlflow.set_experiment("mlp digits")
+    with mlflow.start_run():
+
+        repo = git.Repo(search_parent_directories=True)
+        sha = repo.head.object.hexsha
+        params = {
+            "git commit id hash": str(sha),
+            "hidden_layer_sizes": cfg.hyperparams.layer_size,
+            "random_state": cfg.hyperparams.seed,
+            "max_iter": cfg.hyperparams.max_iter,
+        }
+
+        mlflow.log_params(params)
+
+        # Log the loss metric
+        mlflow.log_metric("Train accuracy", train_acc)
+        mlflow.log_metric("Test accuracy", train_acc)
+        for loss in mlp.loss_curve_:
+            mlflow.log_metric("Loss", loss)
+
+    return mlp
 
 
 if __name__ == "__main__":
